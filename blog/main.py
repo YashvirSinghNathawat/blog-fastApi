@@ -1,22 +1,19 @@
 from fastapi import FastAPI,Depends,Response,status,HTTPException
 from . import schema,models
-from .database import engine,SessionLocal
+from .database import engine,get_db
 from sqlalchemy.orm import Session
-from typing import List
 from .hashing import Hash
+from .routers import blog
 
 app = FastAPI()
 
 # Create Table
 models.Base.metadata.create_all(engine)
 
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+#Include routes
+app.include_router(blog.router)
+
+
 
 
 
@@ -30,18 +27,14 @@ One session for each database operation
 '''
 @app.post('/blog',status_code=201,tags=["blogs"])
 def create(request: schema.Blog,db : Session = Depends(get_db)):  # Depend to handle the dependency and db is db instance     #schema to provide request body
-    new_blog = models.Blog(title = request.title,body=request.body)  # SQLAlchemy Model instance
+    new_blog = models.Blog(title = request.title,body=request.body,user_id = 1)  # SQLAlchemy Model instance
     db.add(new_blog)       # Add instance object to database session
     db.commit()           # Commit changes to database
     db.refresh(new_blog)   # Refresh so that it contains any new data
-
     return new_blog
 
 
-@app.get('/blog',status_code=200,response_model=List[schema.ShowBlog],tags=["blogs"])
-def get_all_blogs(db: Session = Depends(get_db)):
-    blogs = db.query(models.Blog).all()
-    return blogs
+
 
 @app.get('/blog/{id}',response_model=schema.ShowBlog,tags=["blogs"])
 def get_blog(id : int,response: Response,db: Session = Depends(get_db) ):
