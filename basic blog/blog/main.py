@@ -70,7 +70,7 @@ def update_blog(id : int, request : schema.Blog, db : Session = Depends(get_db))
 
 '''User Endpoint'''
 
-@app.post('/create_user',status_code=201,response_model=schema.ShowUser,tags=["users"])
+@app.post('/create-user',status_code=201,response_model=schema.ShowUser,tags=["users"])
 def create_user(request: schema.User,db : Session = Depends(get_db)):
     # Hashing the password
     hashed_password = Hash.get_hashed_password(request.password)
